@@ -1,0 +1,65 @@
+portfolio: Buckeye
+sub_portfolio: LP
+metric: Gross Credit Losses
+forecast_type: Actual
+
+first_input_date: '2019-12-31'
+last_input_date: '2022-12-31'
+frequency: ME
+seasonal_period: 12
+
+analysis:
+  candidate_metrics: []
+  # Optional additional metrics from raw_data to consider as predictors.
+  # Processing flow for each metric listed here:
+  # 1) Build a monthly series using the same portfolio/sub-portfolio/forecast filters.
+  # 2) Add it to the feature frame as column: metric_<metric_name>.
+  # 3) Run through ADF stationarity transform, Corr/MI screening, VIF, and Granger.
+  # Leave this list empty to skip metric-derived candidate features.
+  # Example values:
+  # - Net Credit Losses
+  # - Gross Credit Loss Rate
+  # - Net Credit Loss Rate
+  stationarity_alpha: 0.05
+  acf_lags: 24
+  pacf_lags: 18
+  stl_period: 12
+  feature_selection:
+    lags: [0, 1, 2, 3]
+    corr_threshold: 0.25
+    mi_threshold: 0.05
+    vif_threshold: 5.0
+    granger_max_lag: 3
+    granger_p_threshold: 0.10
+    max_diffs: 2
+
+paths:
+  raw_data: data/dummy_gross_credit_losses.parquet
+  accounts: data/dummy_accounts.parquet
+  dq_roll_rates: data/dummy_dq_roll_rates.parquet
+  metric_rates: data/dummy_metric_rates.parquet
+
+columns:
+  forecast_type: FORECAST_TYPE
+  portfolio: PORTFOLIO
+  sub_portfolio: SUB_PORTFOLIO
+  metric: METRIC
+  date: DATE
+  value: METRIC_VALUE
+
+feature_sources:
+  accounts:
+    path_key: accounts
+    category_col: ACCOUNT_TYPE
+    value_col: NO_OF_ACCOUNTS
+    prefix: acct
+  dq_roll_rates:
+    path_key: dq_roll_rates
+    category_col: RATE_TYPE
+    value_col: RATE
+    prefix: dq
+  metric_rates:
+    path_key: metric_rates
+    category_col: METRIC
+    value_col: METRIC_VALUE
+    prefix: mr
